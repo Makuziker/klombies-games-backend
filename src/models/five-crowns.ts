@@ -236,7 +236,7 @@ export const fiveCrowns = (playerList: string[]) => {
     // TODO
   }
 
-  /** START GAME AND RETURN PUBLIC METHODS */
+  // START GAME AND RETURN PUBLIC METHODS
 
   startGame()
 
