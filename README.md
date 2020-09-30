@@ -1,9 +1,9 @@
 # Klombies Games - Backend
 
 ## DEVELOP
-`npm install`
-`tsc -w`
-`npm start` OR start debugger
+- `npm install`
+- `tsc -w`
+- `npm start` OR start debugger
 
 ## HIGH LEVEL OVERVIEW:
 - `server.ts` starts an HTTP server and chauffeurs Socket.IO events between connected clients and game instances.
