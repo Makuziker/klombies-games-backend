@@ -1,11 +1,6 @@
-interface User {
-  id: string,
-  name: string,
-  room: string,
-  readyToStart: boolean
-}
+import { IUser } from '../types'
 
-const users: User[] = []
+const users: IUser[] = []
 
 export const addUser = ({ id, name, room }: { id: string, name: string, room: string }) => {
   name = name.trim().toLowerCase()
