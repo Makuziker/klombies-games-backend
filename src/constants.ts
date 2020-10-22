@@ -1,19 +1,19 @@
-export const PORT = process.env.PORT || 8080
+export const PORT = process.env.PORT || 8080 // todo place in .env
 
-export const ADMIN = 'admin'
+export const ADMIN = 'Admin'
 
 export const SOCKET_IO = {
-  DISCONNECT: 'disconnect',
-  DRAW_FROM_DECK: 'draw from deck',
-  DRAW_FROM_DISCARD: 'draw from discard',
-  DISCARD_FROM_HAND: 'discard from hand',
-  GO_OUT: 'go out',
-  JOIN_ROOM: 'join',
-  MESSAGE: 'message',
-  ON_CURRENT_USER_JOIN_ROOM: 'current_user_join_room',
-  READY_TO_START: 'ready to start',
-  ROOM_DATA: 'roomData',
-  START_GAME: 'start game',
-  UPDATE_PLAYER_HAND: 'update player hand',
-  USER_MESSAGE: 'sendMessage',
+  JOIN_ROOM: 'JOIN_ROOM',
+  ON_CURRENT_USER_JOIN_ROOM: 'ON_CURRENT_USER_JOIN_ROOM',
+  MESSAGE: 'MESSAGE',
+  ON_MESSAGE: 'ON_MESSAGE',
+  ON_USERS_IN_ROOM: 'ON_USERS_IN_ROOM',
+  READY_TO_START: 'READY_TO_START',
+  START_GAME: 'START_GAME',
+  DRAW_FROM_DECK: 'DRAW_FROM_DECK',
+  DRAW_FROM_DISCARD: 'DRAW_FROM_DISCARD',
+  DISCARD_FROM_HAND: 'DISCARD_FROM_HAND',
+  UPDATE_PLAYER_HAND: 'UPDATE_PLAYER_HAND',
+  GO_OUT: 'GO_OUT',
+  DISCONNECT: 'DISCONNECT',
 }

@@ -1,10 +1,10 @@
-import { FiveCrownsInterface } from './five-crowns'
+import { IFiveCrowns } from './five-crowns'
 
-const gameSessions: { [key: string]: FiveCrownsInterface } = {}
+const gameSessions: { [key: string]: IFiveCrowns } = {}
 
 export const getSession = (roomName: string) => gameSessions[roomName] || null
 
-export const addSession = (roomName: string, game: FiveCrownsInterface) => {
+export const addSession = (roomName: string, game: IFiveCrowns) => {
   // For now, just replace old sessions with new ones
   if (gameSessions[roomName]) {
     removeSession(roomName)

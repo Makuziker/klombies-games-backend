@@ -1,7 +1,7 @@
 import { Socket, Server } from 'socket.io'
 import { IUser } from '../types';
 
-// Shared types 
+// Shared types
 
 export type ISocketFn = (socket: Socket, server: Server) => void;
 export type ICallback<R extends {} = {}> = (payload: { error?: string; request?: R; }) => void;

@@ -12,7 +12,7 @@ export const disconnect: ISocketFn = (socket, io) => {
           user: ADMIN,
           text: `${user.name} has left.`
         })
-        io.to(user.room).emit(SOCKET_IO.ROOM_DATA, {
+        io.to(user.room).emit(SOCKET_IO.ON_USERS_IN_ROOM, {
           room: user.room,
           users: getUsersInRoom(user.room)
         })

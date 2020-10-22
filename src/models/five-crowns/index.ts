@@ -1,49 +1,10 @@
 import fs from 'fs'
 import path from 'path'
-import R, { add } from 'ramda'
-import appRoot from 'app-root-path'
+import R from 'ramda'
 
-interface Card {
-  id: string
-  value: 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 'J' | 'Q' | 'K' | 'JOKER'
-  suit: 'HEARTS' | 'DIAMONDS' | 'CLUBS' | 'STARS' | 'SPADES' | ''
-}
+import { ICard, IPlayers, IRound } from './types'
 
-interface Player {
-  score: number
-  numGoneOut: number
-  hand: Card[]
-  groups: Card[]
-}
-
-interface Players {
-  [key: string]: Player
-}
-
-type Round = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11
-
-export interface FiveCrownsInterface {
-  getPublicState(): {
-    currentRound: number
-    dealerIdx: number
-    turnIdx: number
-    topCardInDiscard: Card
-    playerList: string[]
-    players: Players
-  }
-  getPublicStateAndPrivatePlayer(id: string): {
-    currentRound: number
-    dealerIdx: number
-    turnIdx: number
-    topCardInDiscard: Card
-    playerList: string[]
-    players: Players
-  } | null
-  getPrivatePlayer(id: string): Player | null
-  drawFromDeck(id: string): void | string
-  drawFromDiscard(id: string): void | string
-  discardFromHand(id: string, card: Card): void | string
-}
+export { IFiveCrowns } from './types'
 
 /**
  * A factory function.
@@ -54,16 +15,16 @@ export const fiveCrowns = (playerList: string[]) => {
 
   // GAME STATE INITIALIZATION AND LEXICAL VARIABLES
 
-  const deckTemplate: Card[] = JSON
-    .parse(fs.readFileSync(path.join(appRoot.path, 'five-crowns-deck.json'), 'utf8'))
-  let discardPile: Card[] = []
+  const deckTemplate: ICard[] = JSON
+    .parse(fs.readFileSync(path.join(__dirname, 'card-deck.json'), 'utf8'))
+  let discardPile: ICard[] = []
   let playingDeck = [...deckTemplate]
 
-  let currentRound: Round = 1
+  let currentRound: IRound = 1
   let dealerIdx = 0
   let turnIdx = dealerIdx + 1
 
-  const players: Players = {}
+  const players: IPlayers = {}
   for (const id of playerList) {
     players[id] = {
       score: 0,
@@ -95,18 +56,18 @@ export const fiveCrowns = (playerList: string[]) => {
 
   const playerMayDiscard = (id: string) => players[id].hand.length === currentRound + 3
 
-  const playerHasCard = (playerId: string, card: Card) => players[playerId].hand.includes(card)
+  const playerHasCard = (playerId: string, card: ICard) => players[playerId].hand.includes(card)
 
-  const getCardIdxInHand = (playerId: string, card: Card) => players[playerId].hand.indexOf(card)
+  const getCardIdxInHand = (playerId: string, card: ICard) => players[playerId].hand.indexOf(card)
 
-  const addCardToHand = (id: string, card: Card) => players[id].hand.push(card)
+  const addCardToHand = (id: string, card: ICard) => players[id].hand.push(card)
 
   const removeCardFromHand = (playerId: string, cardIdx: number) => {
     const card = players[playerId].hand.splice(cardIdx, 1)[0]
     return card
   }
 
-  const addCardToDiscard = (card: Card) => discardPile.push(card)
+  const addCardToDiscard = (card: ICard) => discardPile.push(card)
 
   const getTopCardInDiscard = () => R.clone(discardPile[0])
 
@@ -129,7 +90,7 @@ export const fiveCrowns = (playerList: string[]) => {
     return currentRound + 2
   }
 
-  const getCardPointValue = (card: Card) => {
+  const getCardPointValue = (card: ICard) => {
     const wildCard = getCurrentWildCard()
     if (card.value === 'JOKER') return 50
     if (card.value === wildCard) return 20
@@ -148,7 +109,7 @@ export const fiveCrowns = (playerList: string[]) => {
     }
   }
 
-  const shuffleDeck = (deck: Card[]) => {
+  const shuffleDeck = (deck: ICard[]) => {
     const shuffledDeck = [...deck]
     for (let i = shuffledDeck.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -285,7 +246,7 @@ export const fiveCrowns = (playerList: string[]) => {
       const cardFromDiscard = removeCardFromDiscard()
       addCardToHand(id, cardFromDiscard)
     },
-    discardFromHand: (id: string, card: Card) => {
+    discardFromHand: (id: string, card: ICard) => {
       if (!isPlayerTurn(id)) return 'Not their turn'
       if (!playerMayDiscard(id)) return 'Player may not discard'
       const cardIdx = getCardIdxInHand(id, card)

@@ -19,7 +19,8 @@
     "helmet": "^4.1.0",
     "nodemon": "^2.0.4",
     "ramda": "^0.27.1",
-    "socket.io": "^2.3.0"
+    "socket.io": "^2.3.0",
+    "unique-string": "^2.0.0"
   },
   "devDependencies": {
     "@types/app-root-path": "^1.2.4",
