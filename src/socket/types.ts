@@ -16,3 +16,8 @@ export interface IJoinRoomProps {
 export interface IOnCurrentUserJoinRoomProps {
   user: IUser;
 }
+
+export interface IMessageProps {
+  text: string;
+  owner: IUser;
+}

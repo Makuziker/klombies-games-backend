@@ -1,20 +1,23 @@
-import uniqueString from 'unique-string'
+import uniqueString from 'unique-string';
 
 import { SOCKET_IO } from '../constants';
-import { getUser } from '../models/user';
-import { ISocketFn } from './types';
+import { ISocketFn, IMessageProps, ICallback } from './types';
+import { notify } from './util';
 
 export const userMessage: ISocketFn = (socket, io) => {
-  socket.on(SOCKET_IO.MESSAGE, (message, callback) => {
-    const user = getUser(socket.id)
-    if (!user) return callback('Could not find user.')
+  socket.on(SOCKET_IO.MESSAGE, (request: IMessageProps, callback: ICallback = () => { }) => {
+    const { owner, text } = request;
 
-    io.to(user.room).emit(SOCKET_IO.ON_MESSAGE, {
+    if (!owner.id || !owner.name || !owner.room || !text) {
+      return notify(callback, request, 'Invalid request data.');
+    }
+
+    socket.emit(SOCKET_IO.ON_MESSAGE, { // clients are not receiving each others' messages
       id: uniqueString(),
-      user: user.name,
-      text: message
+      owner,
+      text
     });
 
-    callback()
+    return notify(callback, request);
   });
 }
