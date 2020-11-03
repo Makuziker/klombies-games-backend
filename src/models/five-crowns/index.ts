@@ -1,10 +1,10 @@
-import fs from 'fs'
-import path from 'path'
-import R from 'ramda'
+import fs from 'fs';
+import path from 'path';
+import R from 'ramda';
 
-import { ICard, IPlayers, IRound } from './types'
+import { ICard, IPlayers, IRound } from './types';
 
-export { IFiveCrowns } from './types'
+export { IFiveCrowns } from './types';
 
 /**
  * A factory function.
@@ -211,6 +211,7 @@ export const fiveCrowns = (playerList: string[]) => {
       const topCardInDiscard = getTopCardInDiscard()
       const publicPlayers = getPublicPlayers()
       return {
+        isGameInSession: true,
         currentRound,
         dealerIdx,
         turnIdx,
@@ -225,6 +226,7 @@ export const fiveCrowns = (playerList: string[]) => {
       if (!filteredPlayers[id]) return null
       filteredPlayers[id].hand = R.clone(players[id].hand)
       return {
+        isGameInSession: true,
         currentRound,
         dealerIdx,
         turnIdx,

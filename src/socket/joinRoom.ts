@@ -15,7 +15,7 @@ export const joinRoom: ISocketFn = (socket, io) => {
 
     const usersInRoom = getUsersInRoom(user.room);
 
-    socket.emit(SOCKET_IO.ON_USERS_IN_ROOM, { usersInRoom });
+    usersInRoom.forEach(u => io.to(u.id).emit(SOCKET_IO.ON_USERS_IN_ROOM, { usersInRoom }));
 
     return notify(callback, request);
   }
