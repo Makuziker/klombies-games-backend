@@ -1,4 +1,5 @@
 import { Socket, Server } from 'socket.io'
+import { ICard } from '../models/five-crowns/types';
 import { IUser } from '../types';
 
 // Shared types
@@ -20,4 +21,13 @@ export interface IOnCurrentUserJoinRoomProps {
 export interface IMessageProps {
   text: string;
   owner: IUser;
+}
+
+export interface IDiscardFromHandProps {
+  card: ICard;
+}
+
+export interface IGoOutProps {
+  groups: ICard[][];
+  discard: ICard;
 }

@@ -14,7 +14,6 @@ export const readyToStart: ISocketFn = (socket, io) => {
       usersInRoom.forEach(u => io.to(u.id).emit(SOCKET_IO.ON_USERS_IN_ROOM, { usersInRoom }));
 
       if (allUsersInRoomReady(user.room)) {
-        console.log(`all users in ${user.room} are ready`);
         const newGame = fiveCrowns(usersInRoom.map(user => user.id));
         const game = addSession(user.room, newGame);
 

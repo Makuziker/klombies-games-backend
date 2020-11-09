@@ -23,7 +23,7 @@ export interface IFiveCrowns {
     currentRound: number;
     dealerIdx: number;
     turnIdx: number;
-    topCardInDiscard: ICard;
+    topCardInDiscard?: ICard;
     playerList: string[];
     players: IPlayers;
   }
@@ -32,7 +32,7 @@ export interface IFiveCrowns {
     currentRound: number;
     dealerIdx: number;
     turnIdx: number;
-    topCardInDiscard: ICard;
+    topCardInDiscard?: ICard;
     playerList: string[];
     players: IPlayers;
   } | null;
@@ -40,4 +40,5 @@ export interface IFiveCrowns {
   drawFromDeck(id: string): void | string;
   drawFromDiscard(id: string): void | string;
   discardFromHand(id: string, card: ICard): void | string;
+  goOut(id: string, groups: ICard[][], discard: ICard): void | string;
 }
