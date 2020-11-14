@@ -31,3 +31,8 @@ export interface IGoOutProps {
   groups: ICard[][];
   discard: ICard;
 }
+
+export interface ILayDownCardsProps {
+  groups: ICard[][];
+  discard: ICard;
+}

@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import R from 'ramda';
 
-import { ICard, IPlayers, IRound } from './types';
+import { ICard, IPlayers, IRound, IWinner } from './types';
 
 export { IFiveCrowns } from './types';
 
@@ -15,14 +15,15 @@ export const fiveCrowns = (playerList: string[]) => {
 
   // GAME STATE INITIALIZATION AND LEXICAL VARIABLES
 
-  const deckTemplate: ICard[] = JSON
-    .parse(fs.readFileSync(path.join(__dirname, 'card-deck.json'), 'utf8'));
+  const deckTemplate: ICard[] = JSON.parse(fs.readFileSync(path.join(__dirname, 'card-deck.json'), 'utf8'));
   let discardPile: ICard[] = [];
   let playingDeck = [...deckTemplate];
-
   let currentRound: IRound = 1;
   let dealerIdx = 0;
   let turnIdx = dealerIdx + 1;
+  let playerIdWhoWentOut: string | null = null;
+  let isGameInSession = true;
+  let winnerId: IWinner = null;
 
   const players: IPlayers = {};
   for (const id of playerList) {
@@ -50,13 +51,24 @@ export const fiveCrowns = (playerList: string[]) => {
 
   const getPlayerIdByIdx = (index: number) => playerList[index];
 
+  const getPlayerIdxById = (playerId: string) => playerList.findIndex(id => id === playerId);
+
   const isPlayerTurn = (id: string) => id === playerList[turnIdx];
 
   const playerMayDraw = (id: string) => players[id].hand.length === currentRound + 2;
 
   const playerMayDiscard = (id: string) => players[id].hand.length === currentRound + 3;
 
-  const playerHasCard = (playerId: string, card: ICard) => players[playerId].hand.includes(card);
+  const flattenCardGroups = (groups: ICard[][]) => R.flatten(groups);
+
+  const playerHasCardsInGroups = (playerId: string, groups: ICard[][]) => {
+    const flattenedCardGroups = flattenCardGroups(groups);
+    return playerHasCards(playerId, flattenedCardGroups);
+  }
+
+  const addGroupsToPlayer = (playerId: string, groups: ICard[][]) => {
+    players[playerId].groups = { ...groups }; // may not work
+  }
 
   const getCardIdxInHand = (playerId: string, card: ICard) => {
     return players[playerId].hand.findIndex(c => {
@@ -66,12 +78,23 @@ export const fiveCrowns = (playerList: string[]) => {
     });
   }
 
+  const playerHasCard = (playerId: string, card: ICard) => getCardIdxInHand(playerId, card) !== -1;
+
+  const playerHasCards = (playerId: string, cards: ICard[]) => {
+    for (const card of cards) {
+      if (!playerHasCard(playerId, card)) return false;
+    }
+    return true;
+  }
+
   const addCardToHand = (id: string, card: ICard) => players[id].hand.push(card);
 
   const removeCardFromHand = (playerId: string, cardIdx: number) => {
     const card = players[playerId].hand.splice(cardIdx, 1)[0];
     return card;
   }
+
+  const clearHand = (id: string) => players[id].hand = [];
 
   const addCardToDiscard = (card: ICard) => discardPile.unshift(card);
 
@@ -86,6 +109,8 @@ export const fiveCrowns = (playerList: string[]) => {
    * @param index integer between 0 and playerList.length - 1
    */
   const getNextPlayerListIdx = (index: number) => isLastInPlayerList(index) ? 0 : index + 1;
+
+  const getPreviousPlayerListIdx = (index: number) => index === 0 ? playerList.length - 1 : index - 1;
 
   const nextTurn = () => {
     turnIdx = getNextPlayerListIdx(turnIdx);
@@ -108,13 +133,12 @@ export const fiveCrowns = (playerList: string[]) => {
     return card.value;
   }
 
-  const addScores = () => {
-    for (const id in players) {
-      for (const card of players[id].hand) {
-        const cardValue = getCardPointValue(card);
-        players[id].score += cardValue;
-      }
-    }
+  const getScoreForCards = (cards: ICard[]) => {
+    return cards.reduce((points, card) => points + getCardPointValue(card), 0);
+  }
+
+  const addScoreToPlayer = (id: string, score: number) => {
+    players[id].score += score;
   }
 
   const shuffleDeck = (deck: ICard[]) => {
@@ -155,7 +179,7 @@ export const fiveCrowns = (playerList: string[]) => {
     return publicPlayers;
   }
 
-  const declareWinner = () => {
+  const getWinningPlayer = () => {
     let winnerId: string | null = null;
     let tiedIds: string[] = [];
     for (const id in players) {
@@ -193,16 +217,49 @@ export const fiveCrowns = (playerList: string[]) => {
       players[id].hand = [];
       players[id].groups = [];
     }
+    playerIdWhoWentOut = null;
     playingDeck = [...deckTemplate];
     dealerIdx = getNextPlayerListIdx(dealerIdx);
+    turnIdx = getNextPlayerListIdx(dealerIdx);
     currentRound++;
     playingDeck = shuffleDeck(playingDeck);
     dealCards();
   }
 
   const endGame = () => {
-    const winner = declareWinner();
+    winnerId = getWinningPlayer();
+    isGameInSession = false;
+  }
+
+
+  const isValidGroup = (group: ICard[]) => {
     // TODO
+    return true;
+  }
+
+  const isValidGroups = (groups: ICard[][]) => {
+    for (const group of groups) {
+      if (!isValidGroup(group)) return false;
+    }
+    return true;
+  }
+
+  const getRemainingCardsInHand = (id: string, groups: ICard[][], discard: ICard) => {
+    const flattenedCardGroups = flattenCardGroups(groups);
+    const groupsAndDiscard = flattenedCardGroups.concat([discard]);
+    const remainingCards = R.difference(players[id].hand, groupsAndDiscard);
+    return remainingCards.length ? remainingCards : null;
+  }
+
+  const getIdxOfPlayerWhoWentOut = (playerId: string | null) => playerList.findIndex(id => id === playerId);
+
+  const getLastIdxToLayDownCards = () => {
+    const idxOfPlayerWhoWentOut = getIdxOfPlayerWhoWentOut(playerIdWhoWentOut);
+    return getPreviousPlayerListIdx(idxOfPlayerWhoWentOut);
+  }
+
+  const incNumGoneOut = (id: string) => {
+    players[id].numGoneOut ++;
   }
 
   // START GAME AND RETURN PUBLIC METHODS
@@ -219,13 +276,15 @@ export const fiveCrowns = (playerList: string[]) => {
       const topCardInDiscard = getTopCardInDiscard();
       const publicPlayers = getPublicPlayers();
       return {
-        isGameInSession: true,
+        isGameInSession,
         currentRound,
         dealerIdx,
         turnIdx,
         topCardInDiscard,
         playerList,
-        players: publicPlayers
+        players: publicPlayers,
+        playerIdWhoWentOut,
+        winnerId
       };
     },
     getPublicStateAndPrivatePlayer: (id: string) => {
@@ -234,39 +293,76 @@ export const fiveCrowns = (playerList: string[]) => {
       if (!filteredPlayers[id]) return null;
       filteredPlayers[id].hand = R.clone(players[id].hand);
       return {
-        isGameInSession: true,
+        isGameInSession,
         currentRound,
         dealerIdx,
         turnIdx,
         topCardInDiscard,
         playerList,
-        players: filteredPlayers
+        players: filteredPlayers,
+        playerIdWhoWentOut,
+        winnerId
       };
     },
     drawFromDeck: (id: string) => {
-      if (!isPlayerTurn(id)) return 'Not their turn';
+      if (!isPlayerTurn(id)) return 'Not your turn';
       if (!playerMayDraw) return 'Player may not draw';
       const cardFromDeck = removeCardFromDeck();
       addCardToHand(id, cardFromDeck);
       if (playingDeck.length === 0) restoreDeckFromDiscard();
     },
     drawFromDiscard: (id: string) => {
-      if (!isPlayerTurn(id)) return 'Not their turn';
+      if (!isPlayerTurn(id)) return 'Not your turn';
       if (!playerMayDraw) return 'Player may not draw';
       const cardFromDiscard = removeCardFromDiscard();
       addCardToHand(id, cardFromDiscard);
     },
     discardFromHand: (id: string, card: ICard) => {
-      if (!isPlayerTurn(id)) return 'Not their turn';
+      if (!isPlayerTurn(id)) return 'Not your turn';
+      if (playerIdWhoWentOut) return 'Another player has gone out. You must lay down all your cards';
       if (!playerMayDiscard(id)) return 'Player may not discard';
       const cardIdx = getCardIdxInHand(id, card);
-      if (cardIdx === -1) return 'Player does not have that card';
+      if (cardIdx === -1) return 'Player does not have that card to discard';
       const cardToDiscard = removeCardFromHand(id, cardIdx);
       addCardToDiscard(cardToDiscard);
       nextTurn();
     },
     goOut: (id: string, groups: ICard[][], discard: ICard) => {
+      if (!isPlayerTurn(id)) return 'Not your turn';
+      if (!playerMayDiscard(id)) return 'Player may not discard or go out';
+      if (!playerHasCard(id, discard)) return 'Player does not have that card to discard';
+      if (!playerHasCardsInGroups(id, groups)) return 'Player does not have those cards to group';
+      if (!isValidGroups(groups)) return 'Cards groups are not valid combinations';
+      if (getRemainingCardsInHand(id, groups, discard)) return 'Player cannot go out with cards leftover in their hand';
 
+      clearHand(id);
+      addGroupsToPlayer(id, groups);
+      playerIdWhoWentOut = id;
+      incNumGoneOut(id);
+      addCardToDiscard(discard);
+      nextTurn();
+    },
+    layDownCards: (id: string, groups: ICard[][], discard: ICard) => {
+      if (!isPlayerTurn(id)) return 'Not your turn';
+      if (!playerMayDiscard(id)) return 'Player may not discard or go out';
+      if (!playerHasCard(id, discard)) return 'Player does not have that card to discard';
+      if (!playerHasCardsInGroups(id, groups)) return 'Player does not have those cards to group';
+      if (!isValidGroups(groups)) return 'Cards groups are not valid combinations';
+
+      const remainingCards = getRemainingCardsInHand(id, groups, discard);
+      if (remainingCards) {
+        const points = getScoreForCards(remainingCards);
+        addScoreToPlayer(id, points);
+      }
+      clearHand(id);
+      addGroupsToPlayer(id, groups);
+      addCardToDiscard(discard);
+
+      if (R.equals(getLastIdxToLayDownCards(), getPlayerIdxById(id))) {
+        nextRound();
+      } else {
+        nextTurn();
+      }
     }
   }
 }

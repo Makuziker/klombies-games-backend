@@ -8,6 +8,7 @@ import { drawFromDeck } from './drawFromDeck';
 import { drawFromDiscard } from './drawFromDiscard';
 import { discardFromHand } from './discardFromHand';
 import { goOut } from './goOut';
+import { layDownCards } from './layDownCards';
 import { disconnect } from './disconnect';
 
 import { ISocketFn } from './types';
@@ -30,6 +31,7 @@ export default function initializeSockets(server: Server) {
       drawFromDiscard,
       discardFromHand,
       goOut,
+      layDownCards,
       disconnect
     ];
     listeners.forEach(cb => cb(socket, io));
