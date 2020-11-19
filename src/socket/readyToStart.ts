@@ -1,7 +1,7 @@
 import { ADMIN, SOCKET_IO } from '../constants';
 import { fiveCrowns } from '../models/five-crowns';
 import { addSession } from '../models/game-sessions';
-import { allUsersInRoomReady, getUsersInRoom, userReadyToStart } from '../models/user';
+import { allUsersInRoomReady, getUsersInRoom, resetReadyToStartInRoom, userReadyToStart } from '../models/user';
 import { ICallback, ISocketFn } from './types';
 import { notify } from './util';
 
@@ -22,6 +22,8 @@ export const readyToStart: ISocketFn = (socket, io) => {
           if (!state) throw new Error(`Player ${u.id} not found in new game state.`);
           io.to(u.id).emit(SOCKET_IO.ON_START_GAME, state);
         });
+        resetReadyToStartInRoom(user.room);
+        usersInRoom.forEach(u => io.to(u.id).emit(SOCKET_IO.ON_USERS_IN_ROOM, { usersInRoom }));
       }
 
       return notify(callback);

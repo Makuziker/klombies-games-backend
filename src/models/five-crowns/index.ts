@@ -67,7 +67,7 @@ export const fiveCrowns = (playerList: string[]) => {
   }
 
   const addGroupsToPlayer = (playerId: string, groups: ICard[][]) => {
-    players[playerId].groups = { ...groups }; // may not work
+    players[playerId].groups = R.clone(groups);
   }
 
   const getCardIdxInHand = (playerId: string, card: ICard) => {
@@ -259,7 +259,7 @@ export const fiveCrowns = (playerList: string[]) => {
   }
 
   const incNumGoneOut = (id: string) => {
-    players[id].numGoneOut ++;
+    players[id].numGoneOut++;
   }
 
   // START GAME AND RETURN PUBLIC METHODS
