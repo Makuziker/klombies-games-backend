@@ -1,6 +1,13 @@
+import { IUser } from "./types";
+
 export const PORT = process.env.PORT || 8080 // todo place in .env
 
-export const ADMIN = 'Admin';
+export const ADMIN: IUser = {
+  name: 'Admin',
+  id: '000',
+  room: '',
+  readyToStart: false
+};
 
 export const SOCKET_IO = {
   JOIN_ROOM: 'JOIN_ROOM',

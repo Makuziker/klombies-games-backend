@@ -19,6 +19,13 @@ export type IRound = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11;
 
 export type IWinner = null | string | string[];
 
+export type IGroupType = 'ASCENDING_RUN' | 'DESCENDING_RUN' | 'BOOK' | null;
+
+export interface IInvalidGroupMessage {
+  invalidGroup: ICard[];
+  errorMessage: string;
+}
+
 export interface IFiveCrowns {
   getPublicState(): {
     isGameInSession: boolean;
@@ -46,6 +53,6 @@ export interface IFiveCrowns {
   drawFromDeck(id: string): void | string;
   drawFromDiscard(id: string): void | string;
   discardFromHand(id: string, card: ICard): void | string;
-  goOut(id: string, groups: ICard[][], discard: ICard): void | string;
-  layDownCards(id: string, groups: ICard[][], discard: ICard): void | string;
+  goOut(id: string, groups: ICard[][], discard: ICard): void | string | IInvalidGroupMessage[];
+  layDownCards(id: string, groups: ICard[][], discard: ICard): void | string | IInvalidGroupMessage[];
 }

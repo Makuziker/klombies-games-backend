@@ -1,4 +1,6 @@
-import { SOCKET_IO } from '../constants';
+import uniqueString from 'unique-string'
+
+import { ADMIN, SOCKET_IO } from '../constants';
 import { getSession } from '../models/game-sessions';
 import { getUser, getUsersInRoom } from '../models/user';
 import { ICallback, IGoOutProps, ISocketFn } from './types';
@@ -16,12 +18,32 @@ export const goOut: ISocketFn = (socket, io) => {
 
       const error = game.goOut(socket.id, request.groups, request.discard);
       if (error) {
-        console.log(error, socket.id);
+        if (Array.isArray(error)) {
+          error.forEach(e => {
+            socket.emit(SOCKET_IO.ON_MESSAGE, {
+              id: uniqueString(),
+              owner: ADMIN,
+              text: e.errorMessage
+            });
+          });
+        } else {
+          socket.emit(SOCKET_IO.ON_MESSAGE, {
+            id: uniqueString(),
+            owner: ADMIN,
+            text: error
+          });
+        }
         return notify(callback, request, error);
       }
 
       const usersInRoom = getUsersInRoom(user.room);
       usersInRoom.forEach(u => {
+        io.to(u.id).emit(SOCKET_IO.ON_MESSAGE, {
+          id: uniqueString(),
+          owner: ADMIN,
+          text: `${user.name} went out!`
+        });
+
         const state = game.getPublicStateAndPrivatePlayer(u.id);
         io.to(u.id).emit(SOCKET_IO.ON_UPDATE_GAME_STATE, state);
       });

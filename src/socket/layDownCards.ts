@@ -1,4 +1,6 @@
-import { SOCKET_IO } from '../constants';
+import uniqueString from 'unique-string';
+
+import { ADMIN, SOCKET_IO } from '../constants';
 import { getSession } from '../models/game-sessions';
 import { getUser, getUsersInRoom } from '../models/user';
 import { ICallback, ILayDownCardsProps, ISocketFn } from './types';
@@ -16,7 +18,21 @@ export const layDownCards: ISocketFn = (socket, io) => {
 
       const error = game.layDownCards(socket.id, request.groups, request.discard);
       if (error) {
-        console.log(error, socket.id);
+        if (Array.isArray(error)) {
+          error.forEach(e => {
+            socket.emit(SOCKET_IO.ON_MESSAGE, {
+              id: uniqueString(),
+              owner: ADMIN,
+              text: e.errorMessage
+            });
+          });
+        } else {
+          socket.emit(SOCKET_IO.ON_MESSAGE, {
+            id: uniqueString(),
+            owner: ADMIN,
+            text: error
+          });
+        }
         return notify(callback, request, error);
       }
 

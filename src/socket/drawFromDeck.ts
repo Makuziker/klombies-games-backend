@@ -1,6 +1,7 @@
-import { SOCKET_IO } from '../constants';
+import uniqueString from 'unique-string';
+import { ADMIN, SOCKET_IO } from '../constants';
 import { getSession } from '../models/game-sessions';
-import { getUser } from '../models/user';
+import { getUser, getUsersInRoom } from '../models/user';
 import { ICallback, ISocketFn } from './types';
 import { notify } from './util';
 
@@ -17,6 +18,15 @@ export const drawFromDeck: ISocketFn = (socket, io) => {
       console.log(error, socket.id);
       return notify(callback, {}, error);
     }
+
+    const usersInRoom = getUsersInRoom(user.room);
+    usersInRoom.forEach(u => {
+      io.to(u.id).emit(SOCKET_IO.ON_MESSAGE, {
+        id: uniqueString(),
+        owner: ADMIN,
+        text: `${user.name} drew from Deck.`
+      });
+    });
 
     const state = game.getPublicStateAndPrivatePlayer(socket.id);
     if (!state) return notify(callback, {}, `Could not find player ${socket.id}`);

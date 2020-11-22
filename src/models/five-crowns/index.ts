@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import R from 'ramda';
 
-import { ICard, IPlayers, IRound, IWinner } from './types';
+import { ICard, IPlayers, IRound, IWinner, IGroupType, IInvalidGroupMessage } from './types';
 
 export { IFiveCrowns } from './types';
 
@@ -123,10 +123,14 @@ export const fiveCrowns = (playerList: string[]) => {
     return currentRound + 2;
   }
 
-  const getCardPointValue = (card: ICard) => {
-    const wildCard = getCurrentWildCard();
+  const isWild = (card: ICard) => card.value === getCurrentWildCard() || card.value === 'JOKER';
+
+  const getCardPointValue = (card: ICard, includeDynamicWilds = true) => {
+    if (includeDynamicWilds) {
+      const wildCard = getCurrentWildCard();
+      if (card.value === wildCard) return 20;
+    }
     if (card.value === 'JOKER') return 50;
-    if (card.value === wildCard) return 20;
     if (card.value === 'K') return 13;
     if (card.value === 'Q') return 12;
     if (card.value === 'J') return 11;
@@ -231,17 +235,142 @@ export const fiveCrowns = (playerList: string[]) => {
     isGameInSession = false;
   }
 
-
-  const isValidGroup = (group: ICard[]) => {
-    // TODO
-    return true;
+  const getValidAscendingCardInRun = (card: ICard) => {
+    switch (card.value) {
+      case 10:
+        return { value: 'J', suit: card.suit, id: 'placeholder' };
+      case 'J':
+        return { value: 'Q', suit: card.suit, id: 'placeholder' };
+      case 'Q':
+        return { value: 'K', suit: card.suit, id: 'placeholder' };
+      case 'K':
+        return null;
+      case 'JOKER':
+        return null;
+      default:
+        return { value: card.value + 1, suit: card.suit, id: 'placeholder' };
+    }
   }
 
-  const isValidGroups = (groups: ICard[][]) => {
-    for (const group of groups) {
-      if (!isValidGroup(group)) return false;
+  const getValidDescendingCardInRun = (card: ICard) => {
+    switch (card.value) {
+      case 'K':
+        return { value: 'Q', suit: card.suit, id: 'placeholder' };
+      case 'Q':
+        return { value: 'J', suit: card.suit, id: 'placeholder' };
+      case 'J':
+        return { value: 10, suit: card.suit, id: 'placeholder' };
+      case 3:
+        return null;
+      case 'JOKER':
+        return null;
+      default:
+        return { value: card.value - 1, suit: card.suit, id: 'placeholder' };
     }
-    return true;
+  }
+
+  const cardPairHasSameSuitRank = (card1: ICard, card2: ICard) => {
+    return card1.suit === card2.suit && card1.value === card2.value;
+  }
+
+  const cardPairIsBook = (card1: ICard, card2: ICard) => {
+    return card1.value === card2.value;
+  }
+
+  const cardPairIsAscendingRun = (card1: ICard, card2: ICard) => {
+    return card1.suit === card2.suit
+      && getCardPointValue(card1, false) < getCardPointValue(card2, false);
+  }
+
+  const cardPairIsDescendingRun = (card1: ICard, card2: ICard) => {
+    return card1.suit === card2.suit
+      && getCardPointValue(card1, false) > getCardPointValue(card2, false);
+  }
+
+  const determineGroupType = (card1: ICard, card2: ICard) => {
+    if (cardPairIsBook(card1, card2)) return 'BOOK';
+    if (cardPairIsAscendingRun(card1, card2)) return 'ASCENDING_RUN';
+    if (cardPairIsDescendingRun(card1, card2)) return 'DESCENDING_RUN';
+    return null;
+  }
+
+  /**
+   * types of invalid groups:
+   * - two cards not the same suit and not the same rank
+   * - more than half the cards are wild
+   * - after determining groupType, find a card that does not fit the groupType
+   * @returns a string explaining why the group is invalid, or null if the group is valid.
+   */
+  const validateGroup = (group: ICard[]) => {
+    const numOfWilds = group.reduce((acc, card) => isWild(card) ? acc + 1 : acc, 0);
+    if (numOfWilds > Math.floor(group.length / 2)) return 'No more than half the cards can be wild.';
+
+    const firstNonWildIdx = group.findIndex(card => !isWild(card));
+    const secondNonWildIdx = group.findIndex((card, i) => !isWild(card) && i > firstNonWildIdx);
+    if (firstNonWildIdx === -1 || secondNonWildIdx === -1) return 'Group needs at least two non-wild cards.';
+
+    const groupType: IGroupType = determineGroupType(group[firstNonWildIdx], group[secondNonWildIdx]);
+    if (!groupType) return 'Group does not form a Book or a Run.';
+
+    if (firstNonWildIdx > 0 && groupType !== 'BOOK') {
+      // look backwards from the non-wild card
+      // check that a wild is not substituting for a rank above K or below 3
+      let validPrevCard: any = R.clone(group[firstNonWildIdx]); // todo type the validCard templates?
+      let k = firstNonWildIdx;
+      while (k > 0) {
+        switch (groupType) {
+          case 'DESCENDING_RUN':
+            validPrevCard = getValidAscendingCardInRun(validPrevCard);
+            if (validPrevCard === null) return 'A wildcard is substituting for a rank higher than K.';
+            break;
+          case 'ASCENDING_RUN':
+            validPrevCard = getValidDescendingCardInRun(validPrevCard);
+            if (validPrevCard === null) return 'A wildcard is substituting for a rank lower than 3';
+            break;
+        }
+        k--;
+      }
+    }
+
+    // finally, validate that every card after the first non-wild card obeys the groupType
+    let validNextCard: any = R.clone(group[firstNonWildIdx]); // todo add type
+    let i = firstNonWildIdx + 1;
+    while (i < group.length) {
+      switch (groupType) {
+        case 'BOOK':
+          if (isWild(group[i]) || cardPairIsBook(validNextCard, group[i])) break;
+          return 'Book group type contains invalid card(s).';
+        case 'ASCENDING_RUN':
+          validNextCard = getValidAscendingCardInRun(validNextCard);
+          if (!validNextCard) return 'Ascending Run group type contains invalid card(s).';
+          if (isWild(group[i]) || cardPairHasSameSuitRank(group[i], validNextCard)) break;
+          return 'Ascending Run group type contains invalid card(s).';
+        case 'DESCENDING_RUN':
+          validNextCard = getValidDescendingCardInRun(validNextCard);
+          if (!validNextCard) return 'Descending Run group type contains invalid card(s).';
+          if (isWild(group[i]) || cardPairHasSameSuitRank(group[i], validNextCard)) break;
+          return 'Decending Run group type contains invalid card(s).';
+      }
+      i++;
+    }
+
+    return null;
+  }
+
+  /**
+   * @returns null if all groups are valid, or an array of object(s) if there is at least one invalid group.
+   */
+  const validateGroups = (groups: ICard[][]) => {
+    const invalidGroupMessages = groups.reduce<IInvalidGroupMessage[]>((acc, group) => {
+      const error = validateGroup(group);
+      if (error) return acc.concat({
+        invalidGroup: group,
+        errorMessage: error
+      });
+      return acc;
+    }, []);
+
+    return invalidGroupMessages.length ? invalidGroupMessages : null;
   }
 
   const getRemainingCardsInHand = (id: string, groups: ICard[][], discard: ICard) => {
@@ -332,8 +461,9 @@ export const fiveCrowns = (playerList: string[]) => {
       if (!playerMayDiscard(id)) return 'Player may not discard or go out';
       if (!playerHasCard(id, discard)) return 'Player does not have that card to discard';
       if (!playerHasCardsInGroups(id, groups)) return 'Player does not have those cards to group';
-      if (!isValidGroups(groups)) return 'Cards groups are not valid combinations';
       if (getRemainingCardsInHand(id, groups, discard)) return 'Player cannot go out with cards leftover in their hand';
+      const validationErrors = validateGroups(groups);
+      if (validationErrors) return validationErrors;
 
       clearHand(id);
       addGroupsToPlayer(id, groups);
@@ -347,7 +477,8 @@ export const fiveCrowns = (playerList: string[]) => {
       if (!playerMayDiscard(id)) return 'Player may not discard or go out';
       if (!playerHasCard(id, discard)) return 'Player does not have that card to discard';
       if (!playerHasCardsInGroups(id, groups)) return 'Player does not have those cards to group';
-      if (!isValidGroups(groups)) return 'Cards groups are not valid combinations';
+      const validationErrors = validateGroups(groups);
+      if (validationErrors) return validationErrors;
 
       const remainingCards = getRemainingCardsInHand(id, groups, discard);
       if (remainingCards) {
