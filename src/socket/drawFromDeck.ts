@@ -24,7 +24,7 @@ export const drawFromDeck: ISocketFn = (socket, io) => {
       io.to(u.id).emit(SOCKET_IO.ON_MESSAGE, {
         id: uniqueString(),
         owner: ADMIN,
-        text: `${user.name} drew from Deck.`
+        text: `${user.name} drew from Deck.`,
       });
     });
 

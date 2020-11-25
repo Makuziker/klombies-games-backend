@@ -23,14 +23,14 @@ export const goOut: ISocketFn = (socket, io) => {
             socket.emit(SOCKET_IO.ON_MESSAGE, {
               id: uniqueString(),
               owner: ADMIN,
-              text: e.errorMessage
+              text: e.errorMessage,
             });
           });
         } else {
           socket.emit(SOCKET_IO.ON_MESSAGE, {
             id: uniqueString(),
             owner: ADMIN,
-            text: error
+            text: error,
           });
         }
         return notify(callback, request, error);
@@ -41,7 +41,7 @@ export const goOut: ISocketFn = (socket, io) => {
         io.to(u.id).emit(SOCKET_IO.ON_MESSAGE, {
           id: uniqueString(),
           owner: ADMIN,
-          text: `${user.name} went out!`
+          text: `${user.name} went out!`,
         });
 
         const state = game.getPublicStateAndPrivatePlayer(u.id);
@@ -49,6 +49,6 @@ export const goOut: ISocketFn = (socket, io) => {
       });
 
       return notify(callback);
-    }
+    },
   );
 }

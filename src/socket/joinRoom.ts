@@ -13,6 +13,8 @@ export const joinRoom: ISocketFn = (socket, io) => {
       if (error) return notify(callback, request, error);
       if (!user) return notify(callback, request, 'Failed to add user');
 
+      // socket.join(user.room);
+
       socket.emit(SOCKET_IO.ON_CURRENT_USER_JOIN_ROOM, { user }); // redundant perhaps
 
       const usersInRoom = getUsersInRoom(user.room);
@@ -20,6 +22,6 @@ export const joinRoom: ISocketFn = (socket, io) => {
       usersInRoom.forEach(u => io.to(u.id).emit(SOCKET_IO.ON_USERS_IN_ROOM, { usersInRoom }));
 
       return notify(callback, request);
-    }
+    },
   );
 }

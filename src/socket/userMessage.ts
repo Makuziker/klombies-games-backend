@@ -18,7 +18,7 @@ export const userMessage: ISocketFn = (socket, io) => {
       io.to(u.id).emit(SOCKET_IO.ON_MESSAGE, {
         id: uniqueString(),
         owner,
-        text
+        text,
       });
     });
 

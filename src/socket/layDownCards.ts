@@ -23,14 +23,14 @@ export const layDownCards: ISocketFn = (socket, io) => {
             socket.emit(SOCKET_IO.ON_MESSAGE, {
               id: uniqueString(),
               owner: ADMIN,
-              text: e.errorMessage
+              text: e.errorMessage,
             });
           });
         } else {
           socket.emit(SOCKET_IO.ON_MESSAGE, {
             id: uniqueString(),
             owner: ADMIN,
-            text: error
+            text: error,
           });
         }
         return notify(callback, request, error);
@@ -43,6 +43,6 @@ export const layDownCards: ISocketFn = (socket, io) => {
       });
 
       return notify(callback);
-    }
+    },
   );
 }

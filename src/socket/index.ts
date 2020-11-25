@@ -1,5 +1,5 @@
-import socketIO from 'socket.io';
-import { Server } from 'http'
+import { Server, Socket } from 'socket.io';
+import http from 'http';
 
 import { joinRoom } from './joinRoom';
 import { userMessage } from './userMessage';
@@ -10,19 +10,24 @@ import { discardFromHand } from './discardFromHand';
 import { goOut } from './goOut';
 import { layDownCards } from './layDownCards';
 import { disconnect } from './disconnect';
-
+import { CLIENT_ORIGIN } from '../constants';
 import { ISocketFn } from './types';
 
 let initialized = false;
 
-export default function initializeSockets(server: Server) {
+export default function initializeSockets(server: http.Server) {
   if (initialized) {
     return;
   }
 
-  const io = socketIO(server);
+  const io = new Server(server, {
+    cors: {
+      origin: CLIENT_ORIGIN,
+      methods: ['GET', 'POST'],
+    },
+  });
 
-  io.on('connection', socket => {
+  io.on('connection', (socket: Socket) => {
     const listeners: ISocketFn[] = [
       joinRoom,
       userMessage,
@@ -32,8 +37,10 @@ export default function initializeSockets(server: Server) {
       discardFromHand,
       goOut,
       layDownCards,
-      disconnect
+      disconnect,
     ];
     listeners.forEach(cb => cb(socket, io));
   });
+
+  initialized = true;
 }

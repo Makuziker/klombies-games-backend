@@ -3,15 +3,15 @@ import { IUser } from '../types';
 const users: IUser[] = [];
 
 export const addUser = ({ id, name, room }: { id: string, name: string, room: string }) => {
-  name = name.trim().toLowerCase();
-  room = room.trim().toLowerCase();
+  const trimmedName = name.trim().toLowerCase();
+  const trimmedRoom = room.trim().toLowerCase();
 
-  const existingUser = users.find(user => user.name === name && user.room === room);
+  const existingUser = users.find(u => u.name === trimmedName && u.room === trimmedRoom);
   if (existingUser) {
     return { error: 'Username is taken' };
   }
 
-  const user = { id, name, room, readyToStart: false };
+  const user = { id, name: trimmedName, room: trimmedRoom, readyToStart: false };
   users.push(user);
   return { user };
 }

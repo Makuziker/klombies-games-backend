@@ -1,2 +1,11 @@
-/node_modules
-/out
+# Compiled JavaScript files
+lib/
+
+# Except the ESLint config file
+!.eslintrc.js
+
+# TypeScript v1 declaration files
+typings/
+
+# Node.js dependency directory
+node_modules/

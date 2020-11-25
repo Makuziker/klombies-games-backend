@@ -1,16 +1,15 @@
-import http from 'http';
+import { createServer } from 'http';
 import express from 'express';
-// import helmet from 'helmet';
-import cors from 'cors';
+import helmet from 'helmet';
 
 import router from './router';
-import { PORT } from './constants';
 import initializeSockets from './socket';
+import { PORT } from './constants';
 
 const app = express();
-const server = http.createServer(app);
+const server = createServer(app);
 
-app.use(cors());
+app.use(helmet());
 app.use(router);
 
 server.listen(PORT, () => {

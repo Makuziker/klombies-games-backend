@@ -1,12 +1,14 @@
 import { IUser } from "./types";
 
-export const PORT = process.env.PORT || 8080 // todo place in .env
+export const PORT = process.env.PORT || 4000;
+
+export const CLIENT_ORIGIN = 'http://localhost:3000'; // 'https://klombies-games.web.app';
 
 export const ADMIN: IUser = {
   name: 'Admin',
   id: '000',
   room: '',
-  readyToStart: false
+  readyToStart: false,
 };
 
 export const SOCKET_IO = {

@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import R from 'ramda';
+import appRoot from 'app-root-path';
 
 import { ICard, IPlayers, IRound, IWinner, IGroupType, IInvalidGroupMessage } from './types';
 
@@ -15,7 +16,7 @@ export const fiveCrowns = (playerList: string[]) => {
 
   // GAME STATE INITIALIZATION AND LEXICAL VARIABLES
 
-  const deckTemplate: ICard[] = JSON.parse(fs.readFileSync(path.join(__dirname, 'card-deck.json'), 'utf8'));
+  const deckTemplate: ICard[] = JSON.parse(fs.readFileSync(path.join(appRoot.path, 'card-deck.json'), 'utf8'));
   let discardPile: ICard[] = [];
   let playingDeck = [...deckTemplate];
   let currentRound: IRound = 1;
@@ -31,7 +32,7 @@ export const fiveCrowns = (playerList: string[]) => {
       score: 0,
       numGoneOut: 0,
       hand: [],
-      groups: []
+      groups: [],
     };
   }
 
@@ -184,28 +185,28 @@ export const fiveCrowns = (playerList: string[]) => {
   }
 
   const getWinningPlayer = () => {
-    let winnerId: string | null = null;
+    let winningId: string | null = null;
     let tiedIds: string[] = [];
     for (const id in players) {
-      if (!winnerId) {
-        winnerId = id;
+      if (!winningId) {
+        winningId = id;
         continue;
       }
-      if (players[id].score < players[winnerId].score) {
-        winnerId = id;
+      if (players[id].score < players[winningId].score) {
+        winningId = id;
         tiedIds = [];
         continue;
       }
-      if (players[id].score === players[winnerId].score) {
+      if (players[id].score === players[winningId].score) {
         tiedIds.push(id);
         continue;
       }
     }
-    if (tiedIds.length > 0 && winnerId) {
-      tiedIds.push(winnerId);
+    if (tiedIds.length > 0 && winningId) {
+      tiedIds.push(winningId);
       return tiedIds;
     }
-    return winnerId;
+    return winningId;
   }
 
   const startGame = () => {
@@ -306,7 +307,7 @@ export const fiveCrowns = (playerList: string[]) => {
     if (numOfWilds > Math.floor(group.length / 2)) return 'No more than half the cards can be wild.';
 
     const firstNonWildIdx = group.findIndex(card => !isWild(card));
-    const secondNonWildIdx = group.findIndex((card, i) => !isWild(card) && i > firstNonWildIdx);
+    const secondNonWildIdx = group.findIndex((card, index) => !isWild(card) && index > firstNonWildIdx);
     if (firstNonWildIdx === -1 || secondNonWildIdx === -1) return 'Group needs at least two non-wild cards.';
 
     const groupType: IGroupType = determineGroupType(group[firstNonWildIdx], group[secondNonWildIdx]);
@@ -365,7 +366,7 @@ export const fiveCrowns = (playerList: string[]) => {
       const error = validateGroup(group);
       if (error) return acc.concat({
         invalidGroup: group,
-        errorMessage: error
+        errorMessage: error,
       });
       return acc;
     }, []);
@@ -413,7 +414,7 @@ export const fiveCrowns = (playerList: string[]) => {
         playerList,
         players: publicPlayers,
         playerIdWhoWentOut,
-        winnerId
+        winnerId,
       };
     },
     getPublicStateAndPrivatePlayer: (id: string) => {
@@ -430,7 +431,7 @@ export const fiveCrowns = (playerList: string[]) => {
         playerList,
         players: filteredPlayers,
         playerIdWhoWentOut,
-        winnerId
+        winnerId,
       };
     },
     drawFromDeck: (id: string) => {
@@ -494,6 +495,6 @@ export const fiveCrowns = (playerList: string[]) => {
       } else {
         nextTurn();
       }
-    }
+    },
   }
 }

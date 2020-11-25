@@ -29,6 +29,6 @@ export const discardFromHand: ISocketFn = (socket, io) => {
       });
 
       return notify(callback);
-    }
+    },
   );
 }
