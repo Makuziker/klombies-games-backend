@@ -2,7 +2,7 @@ import { IUser } from "./types";
 
 export const isProduction = () => process.env.NODE_ENV === 'production';
 
-export const PORT = isProduction() ? '/' : 4000;
+export const PORT = process.env.PORT || 4000;
 
 export const CLIENT_ORIGIN = isProduction()
   ? 'https://klombies-games.web.app'
