@@ -1,8 +1,12 @@
 import { IUser } from "./types";
 
-export const PORT = process.env.PORT || 4000;
+export const isProduction = () => process.env.NODE_ENV === 'production';
 
-export const CLIENT_ORIGIN = 'http://localhost:3000'; // 'https://klombies-games.web.app';
+export const PORT = isProduction() ? '/' : 4000;
+
+export const CLIENT_ORIGIN = isProduction()
+  ? 'https://klombies-games.web.app'
+  : 'http://localhost:3000';
 
 export const ADMIN: IUser = {
   name: 'Admin',
