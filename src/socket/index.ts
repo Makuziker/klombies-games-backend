@@ -20,6 +20,8 @@ export default function initializeSockets(server: http.Server) {
     return;
   }
 
+  console.log('Client Origin:', CLIENT_ORIGIN);
+
   const io = new Server(server, {
     cors: {
       origin: CLIENT_ORIGIN,
